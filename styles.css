@@ -649,7 +649,8 @@ body {
 .scholar-card {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
-    background-color: var(--background-primary);
+    /* locked so click/flash states can never tint the card, only the border */
+    background-color: var(--background-primary) !important;
     border: 1px solid var(--background-modifier-border);
     border-left: 3px solid var(--scholar-card-accent);
     border-radius: var(--radius-m);
