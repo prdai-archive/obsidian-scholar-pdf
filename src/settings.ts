@@ -460,7 +460,7 @@ export const DEFAULT_SETTINGS: PDFPlusSettings = {
 		{ id: 'page', visible: true },
 		{ id: 'settings', visible: true },
 	],
-	selectionProductMenuConfig: ['color', 'copy-format', 'display'],
+	selectionProductMenuConfig: ['color'],
 	writeFileProductMenuConfig: ['color', 'copy-format', 'display'],
 	annotationProductMenuConfig: ['copy-format', 'display'],
 	updateColorPaletteStateFromContextMenu: true,
