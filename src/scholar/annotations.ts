@@ -94,19 +94,51 @@ export class ScholarAnnotations {
         const selection = activeWindow.getSelection();
         if (!selection || !selection.toString()) return null;
 
-        // Use PDF++'s own range computation (based on Range, which is always
-        // normalized start-before-end) instead of Obsidian's
-        // getTextSelectionRangeStr, which returns a collapsed 1-character range
-        // for backward (right-to-left) selections.
-        const pageAndRange = lib.copyLink.getPageAndTextRangeFromSelection(selection);
-        if (!pageAndRange || !pageAndRange.selection) return null;
-        const { page, selection: range } = pageAndRange;
-
         const pageEl = lib.getPageElFromSelection(selection);
-        if (!pageEl) return null;
+        if (!pageEl || pageEl.dataset.pageNumber === undefined) return null;
+        const page = +pageEl.dataset.pageNumber;
         const child = lib.getPDFViewerChildAssociatedWithNode(pageEl);
         const file = child?.file;
         if (!file) return null;
+
+        // Range boundaries can be text nodes with char offsets OR element nodes
+        // with child indices (Chromium produces the latter for whole-node
+        // selections since Obsidian 1.9). Char-offset math on the element form
+        // yields garbage 1-char ranges, so instead: find the first/last text
+        // layer nodes the range touches and measure the text length up to each
+        // boundary — correct for both forms.
+        const domRange = selection.rangeCount > 0 ? selection.getRangeAt(0) : null;
+        if (!domRange || domRange.collapsed) return null;
+
+        let startNode: HTMLElement | null = null;
+        let endNode: HTMLElement | null = null;
+        for (const node of pageEl.querySelectorAll<HTMLElement>('.textLayerNode')) {
+            if (domRange.intersectsNode(node)) {
+                if (!startNode) startNode = node;
+                endNode = node;
+            }
+        }
+        if (!startNode || !endNode || startNode.dataset.idx === undefined || endNode.dataset.idx === undefined) return null;
+
+        const textLengthUpTo = (node: HTMLElement, boundaryContainer: Node, boundaryOffset: number) => {
+            const measure = node.doc.createRange();
+            measure.selectNodeContents(node);
+            try {
+                measure.setEnd(boundaryContainer, boundaryOffset);
+            } catch {
+                return (node.textContent ?? '').length;
+            }
+            return measure.toString().length;
+        };
+        const clamp = (value: number, max: number) => Math.max(0, Math.min(value, max));
+
+        const range = {
+            beginIndex: +startNode.dataset.idx - this.plugin.textDivFirstIdx,
+            beginOffset: clamp(textLengthUpTo(startNode, domRange.startContainer, domRange.startOffset), (startNode.textContent ?? '').length),
+            endIndex: +endNode.dataset.idx - this.plugin.textDivFirstIdx,
+            endOffset: clamp(textLengthUpTo(endNode, domRange.endContainer, domRange.endOffset), (endNode.textContent ?? '').length),
+        };
+        if (range.beginIndex === range.endIndex && range.beginOffset >= range.endOffset) return null;
 
         const subpath = `#page=${page}&selection=${range.beginIndex},${range.beginOffset},${range.endIndex},${range.endOffset}`;
         return {
