@@ -672,7 +672,7 @@ body {
 .scholar-card {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
-    background-color: var(--background-primary);
+    background-color: var(--background-secondary);
     border: 1px solid var(--background-modifier-border);
     border-left: 3px solid var(--scholar-card-accent);
     border-radius: var(--radius-m);
