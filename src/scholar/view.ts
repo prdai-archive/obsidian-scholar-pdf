@@ -13,12 +13,16 @@ export class ScholarAnnotationsView extends ItemView {
     currentPdf: TFile | null = null;
     cardEls = new Map<string, HTMLElement>();
 
-    flashCard(subpath: string) {
+    flashCard(subpath: string, attempt = 0) {
         let target = this.cardEls.get(subpath);
         if (!target) {
             try { target = this.cardEls.get(decodeURIComponent(subpath)); } catch { /* malformed URI */ }
         }
-        if (!target) return;
+        if (!target) {
+            // the sidebar may still be rendering (e.g. it was just opened)
+            if (attempt < 5) activeWindow.setTimeout(() => this.flashCard(subpath, attempt + 1), 200);
+            return;
+        }
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         target.addClass('is-flashing');
         activeWindow.setTimeout(() => target.removeClass('is-flashing'), 1600);

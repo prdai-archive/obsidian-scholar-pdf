@@ -929,6 +929,5 @@ body.pdf-plus-vim-hint-inverted {
 @keyframes scholar-card-flash {
     50% {
         border-color: var(--scholar-card-accent);
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--scholar-card-accent) 60%, transparent);
     }
 }
