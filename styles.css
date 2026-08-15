@@ -789,7 +789,7 @@ body {
 
 @keyframes scholar-card-flash {
     50% {
-        border-color: var(--scholar-card-accent);
+        border-left-width: 6px;
     }
 }
 
