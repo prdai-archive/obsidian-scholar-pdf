@@ -47,7 +47,6 @@ export class ScholarAnnotations {
             `annotation-target: "[[${pdfLink}]]"`,
             `title: "${pdf.basename.replace(/"/g, '\\"')}"`,
             `added: "${window.moment().format('YYYY-MM-DD')}"`,
-            'tags: [scholar-annotations]',
             '---',
             '',
             `# Annotations for [[${pdfLink}]]`,

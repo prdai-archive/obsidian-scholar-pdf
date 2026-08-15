@@ -1,4 +1,4 @@
-import { Constructor, EventRef, Events, FileSystemAdapter, Keymap, Menu, Notice, ObsidianProtocolData, PaneType, Platform, Plugin, SettingTab, TFile, addIcon, apiVersion, loadPdfJs, requireApiVersion } from 'obsidian';
+import { Constructor, EventRef, Events, FileSystemAdapter, Keymap, Menu, Notice, ObsidianProtocolData, PaneType, Platform, Plugin, SettingTab, TFile, addIcon, apiVersion, debounce, loadPdfJs, requireApiVersion, setIcon } from 'obsidian';
 import * as pdflib from '@cantoo/pdf-lib';
 
 import { patchPDFView, patchPDFInternals, patchBacklink, patchWorkspace, patchPagePreview, patchClipboardManager, patchPDFInternalFromPDFEmbed, patchMenu } from 'patchers';
@@ -156,6 +156,69 @@ export default class PDFPlus extends Plugin {
 		});
 
 		this.addRibbonIcon('highlighter', 'Open annotations sidebar', () => this.openScholarSidebar());
+
+		this.registerScholarSelectionPopup();
+	}
+
+	/**
+	 * Annotator-style popup: selecting text in a PDF shows a small floating
+	 * toolbar with the highlight colors and a comment button right at the selection.
+	 */
+	registerScholarSelectionPopup() {
+		let popupEl: HTMLElement | null = null;
+		const removePopup = () => {
+			popupEl?.remove();
+			popupEl = null;
+		};
+
+		const showPopup = () => {
+			removePopup();
+
+			const selection = activeWindow.getSelection();
+			if (!selection || selection.isCollapsed || !selection.toString().trim()) return;
+			if (selection.rangeCount === 0) return;
+			const range = selection.getRangeAt(0);
+			const el = range.startContainer instanceof Element ? range.startContainer : range.startContainer.parentElement;
+			// only inside a PDF text layer
+			if (!el?.closest('.pdf-viewer .textLayer')) return;
+
+			const rect = range.getBoundingClientRect();
+			popupEl = activeDocument.body.createDiv('scholar-selection-popup');
+
+			for (const [name, color] of Object.entries(this.settings.colors)) {
+				if (name.toLowerCase() === 'yellow') continue; // yellow = annotation via comment button
+				const dot = popupEl.createDiv('scholar-popup-dot');
+				dot.style.backgroundColor = color;
+				dot.setAttribute('aria-label', `Highlight (${name})`);
+				dot.addEventListener('pointerdown', (evt) => {
+					evt.preventDefault();
+					evt.stopPropagation();
+					this.scholarAnnotateSelectionQuick(name);
+					removePopup();
+				});
+			}
+
+			const commentButton = popupEl.createDiv({ cls: ['scholar-popup-comment', 'clickable-icon'] });
+			setIcon(commentButton, 'lucide-message-square-plus');
+			commentButton.setAttribute('aria-label', 'Highlight with comment');
+			commentButton.addEventListener('pointerdown', (evt) => {
+				evt.preventDefault();
+				evt.stopPropagation();
+				this.scholarAnnotateSelection();
+				removePopup();
+			});
+
+			const popupWidth = popupEl.offsetWidth || 160;
+			const left = Math.min(Math.max(rect.left + rect.width / 2 - popupWidth / 2, 8), activeWindow.innerWidth - popupWidth - 8);
+			popupEl.style.left = `${left}px`;
+			popupEl.style.top = `${Math.min(rect.bottom + 8, activeWindow.innerHeight - 48)}px`;
+		};
+
+		this.registerDomEvent(document, 'selectionchange', debounce(showPopup, 350, true));
+		this.registerDomEvent(document, 'pointerdown', (evt) => {
+			if (popupEl && !popupEl.contains(evt.target as Node)) removePopup();
+		});
+		this.register(removePopup);
 	}
 
 	async openScholarSidebar() {
@@ -176,6 +239,15 @@ export default class PDFPlus extends Plugin {
 		this.scholar.addAnnotationFromSelection('', color);
 	}
 
+	/** Open the scholar sidebar and flash the card matching the given PDF subpath. */
+	async revealScholarCard(subpath: string | null) {
+		await this.openScholarSidebar();
+		if (!subpath) return;
+		const leaf = this.app.workspace.getLeavesOfType(SCHOLAR_VIEW_TYPE)[0];
+		const view = leaf?.view;
+		if (view instanceof ScholarAnnotationsView) view.flashCard(subpath);
+	}
+
 	scholarAnnotateSelection() {
 		const selection = activeWindow.getSelection();
 		const text = selection?.toString() ?? '';
@@ -184,7 +256,8 @@ export default class PDFPlus extends Plugin {
 			return;
 		}
 		const save = async (comment: string) => {
-			const saved = await this.scholar.addAnnotationFromSelection(comment);
+			// yellow is reserved for annotations with comments
+			const saved = await this.scholar.addAnnotationFromSelection(comment, 'yellow');
 			if (saved && this.settings.scholarOpenSidebarOnAnnotate) {
 				await this.openScholarSidebar();
 			}

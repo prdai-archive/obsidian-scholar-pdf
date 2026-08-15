@@ -110,9 +110,21 @@ export class BacklinkDomManager extends PDFPlusComponent {
                 this.hookBacklinkViewEventHandlers(el, cache);
                 this.hookContextMenuHandler(el, cache);
                 this.hookClassAdderOnMouseOver(el, cache);
+                this.hookScholarSidebarReveal(el, cache);
                 this.setHighlightColor(el, color);
             }
         }
+    }
+
+    /** Clicking a highlight reveals & flashes the matching card in the scholar sidebar. */
+    hookScholarSidebarReveal(el: HTMLElement, cache: PDFBacklinkCache) {
+        this.registerDomEventForCache(cache, el, 'click', () => {
+            const link = 'link' in cache.refCache ? cache.refCache.link : null;
+            if (!link) return;
+            const hashIndex = link.indexOf('#');
+            const subpath = hashIndex >= 0 ? link.slice(hashIndex) : null;
+            this.plugin.revealScholarCard(subpath);
+        });
     }
 
     hookBacklinkOpeners(el: HTMLElement, cache: PDFBacklinkCache) {

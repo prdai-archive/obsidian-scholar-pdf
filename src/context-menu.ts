@@ -513,21 +513,21 @@ export class PDFPlusContextMenu extends PDFPlusMenu {
                     .onClick(() => plugin.scholarAnnotateSelection());
             });
 
-            // copy with custom formats //
+            // plain highlight: color the selection, nothing else
+            // (yellow is reserved for annotations with comments)
+            for (const [name, color] of Object.entries(plugin.settings.colors)) {
+                if (name.toLowerCase() === 'yellow') continue;
+                this.addItem((item) => {
+                    item.setSection('selection')
+                        .setTitle(`Highlight ${name.toLowerCase()}`)
+                        .setIcon('lucide-circle')
+                        .onClick(() => plugin.scholarAnnotateSelectionQuick(name));
+                    (item as any).iconEl?.style.setProperty('color', color);
+                    return item;
+                });
+            }
 
             if (selectedText && selection && child.palette) {
-                if (isVisible('selection')) {
-                    PDFPlusProductMenuComponent
-                        .create(this, child.palette)
-                        .setSection('selection', 'Copy link to selection', 'lucide-copy')
-                        .addItems(plugin.settings.selectionProductMenuConfig)
-                        .onItemClick(({ copyFormat, displayTextFormat, colorName }) => {
-                            lib.copyLink.copyLinkToSelection(false, { copyFormat, displayTextFormat }, colorName ?? undefined);
-                            // also record a scholar annotation so the highlight is
-                            // immediately visualized in the PDF via backlinks
-                            plugin.scholarAnnotateSelectionQuick(colorName ?? undefined);
-                        });
-                }
 
                 // // Create a Canvas card
                 // if (canvas && plugin.settings.canvasContextMenu) {

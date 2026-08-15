@@ -11,6 +11,18 @@ export const SCHOLAR_VIEW_TYPE = 'scholar-annotations';
  */
 export class ScholarAnnotationsView extends ItemView {
     currentPdf: TFile | null = null;
+    cardEls = new Map<string, HTMLElement>();
+
+    flashCard(subpath: string) {
+        let target = this.cardEls.get(subpath);
+        if (!target) {
+            try { target = this.cardEls.get(decodeURIComponent(subpath)); } catch { /* malformed URI */ }
+        }
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.addClass('is-flashing');
+        activeWindow.setTimeout(() => target.removeClass('is-flashing'), 1600);
+    }
 
     constructor(leaf: WorkspaceLeaf, public plugin: PDFPlus) {
         super(leaf);
@@ -62,6 +74,7 @@ export class ScholarAnnotationsView extends ItemView {
     async render() {
         const container = this.contentEl;
         container.empty();
+        this.cardEls.clear();
         container.addClass('scholar-sidebar');
 
         const header = container.createDiv('scholar-sidebar-header');
@@ -109,6 +122,7 @@ export class ScholarAnnotationsView extends ItemView {
 
     renderCard(parent: HTMLElement, annotation: ScholarAnnotation, annotationFile: TFile) {
         const card = parent.createDiv('scholar-card');
+        this.cardEls.set(annotation.subpath, card);
         const colorHex = this.highlightColorHex(annotation);
         if (colorHex) card.style.setProperty('--scholar-card-accent', colorHex);
 
