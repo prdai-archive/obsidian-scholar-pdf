@@ -523,6 +523,9 @@ export class PDFPlusContextMenu extends PDFPlusMenu {
                         .addItems(plugin.settings.selectionProductMenuConfig)
                         .onItemClick(({ copyFormat, displayTextFormat, colorName }) => {
                             lib.copyLink.copyLinkToSelection(false, { copyFormat, displayTextFormat }, colorName ?? undefined);
+                            // also record a scholar annotation so the highlight is
+                            // immediately visualized in the PDF via backlinks
+                            plugin.scholarAnnotateSelectionQuick(colorName ?? undefined);
                         });
                 }
 

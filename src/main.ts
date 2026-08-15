@@ -171,6 +171,11 @@ export default class PDFPlus extends Plugin {
 		}
 	}
 
+	/** Save an annotation for the current selection without prompting for a comment. */
+	scholarAnnotateSelectionQuick(color?: string) {
+		this.scholar.addAnnotationFromSelection('', color);
+	}
+
 	scholarAnnotateSelection() {
 		const selection = activeWindow.getSelection();
 		const text = selection?.toString() ?? '';

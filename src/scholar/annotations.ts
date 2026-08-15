@@ -75,8 +75,8 @@ export class ScholarAnnotations {
         return '\n' + lines.join('\n') + '\n';
     }
 
-    async addAnnotationFromSelection(comment: string): Promise<boolean> {
-        const variables = this.plugin.lib.copyLink.getTemplateVariables({});
+    async addAnnotationFromSelection(comment: string, color?: string): Promise<boolean> {
+        const variables = this.plugin.lib.copyLink.getTemplateVariables(color ? { color: color.toLowerCase() } : {});
         if (!variables || !variables.text) {
             new Notice(`${this.plugin.manifest.name}: select text in a PDF first`);
             return false;
