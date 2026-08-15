@@ -649,19 +649,18 @@ body {
 .scholar-card {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
-    /* locked so click/flash states can never tint the card, only the border */
-    background-color: var(--background-primary) !important;
-    border: 1px solid var(--background-modifier-border);
+    /* minimal: no fill, no box border - just the left accent bar */
+    background-color: transparent !important;
+    border: none;
     border-left: 3px solid var(--scholar-card-accent);
+    border-radius: 0;
     border-radius: var(--radius-m);
     padding: var(--size-4-3);
     transition: border-color 100ms ease, box-shadow 100ms ease;
 }
 
 .scholar-card:hover {
-    border-color: var(--background-modifier-border-hover);
-    border-left-color: var(--scholar-card-accent);
-    box-shadow: var(--shadow-s);
+    background-color: var(--background-modifier-hover) !important;
 }
 
 .scholar-card-meta {
