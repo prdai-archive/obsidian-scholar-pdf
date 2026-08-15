@@ -648,8 +648,8 @@ body {
 .scholar-card {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
-    /* minimal: no fill ever, no box border - just the left accent bar */
-    background: none !important;
+    /* dark card fill + left accent bar; locked so no state can tint it */
+    background: var(--background-secondary) !important;
     border: none;
     border-left: 3px solid var(--scholar-card-accent);
     border-radius: 0;
