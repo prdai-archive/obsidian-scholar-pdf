@@ -90,10 +90,32 @@ export class ScholarAnnotations {
      * which used to record 1-character highlight ranges).
      */
     captureSelection(): ScholarSelectionCapture | null {
-        const variables = this.plugin.lib.copyLink.getTemplateVariables({});
-        if (!variables || !variables.text) return null;
-        const { file, subpath, page, pageLabel, text } = variables;
-        return { file, subpath, page, pageLabel, text };
+        const lib = this.plugin.lib;
+        const selection = activeWindow.getSelection();
+        if (!selection || !selection.toString()) return null;
+
+        // Use PDF++'s own range computation (based on Range, which is always
+        // normalized start-before-end) instead of Obsidian's
+        // getTextSelectionRangeStr, which returns a collapsed 1-character range
+        // for backward (right-to-left) selections.
+        const pageAndRange = lib.copyLink.getPageAndTextRangeFromSelection(selection);
+        if (!pageAndRange || !pageAndRange.selection) return null;
+        const { page, selection: range } = pageAndRange;
+
+        const pageEl = lib.getPageElFromSelection(selection);
+        if (!pageEl) return null;
+        const child = lib.getPDFViewerChildAssociatedWithNode(pageEl);
+        const file = child?.file;
+        if (!file) return null;
+
+        const subpath = `#page=${page}&selection=${range.beginIndex},${range.beginOffset},${range.endIndex},${range.endOffset}`;
+        return {
+            file,
+            subpath,
+            page,
+            pageLabel: child.getPage(page).pageLabel ?? ('' + page),
+            text: lib.toSingleLine(selection.toString()),
+        };
     }
 
     async addAnnotationFromSelection(comment: string, color?: string, captured?: ScholarSelectionCapture | null): Promise<ScholarAnnotation | null> {
