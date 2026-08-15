@@ -1,0 +1,66 @@
+name: Bug report
+description: "Report a bug with PDF++."
+labels: ["bug"]
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time to fill out this bug report!
+        
+        Please note:
+        - A problem will be considered as PDF++'s bug only if it is reproducible in a minimal vault where only this plugin (and other relevant plugins if any) are enabled. If you are on desktop, the [sandbox vault](https://help.obsidian.md/Getting+started/Sandbox+vault) is a good place for testing. Alternatively, you can just newly create a clean vault.
+        - If it cannot be reproduced in such a minimal vault, please follow the instructions on [this page](https://github.com/RyotaUshio/obsidian-pdf-plus/wiki/Trouble-shooting-guide).
+        - Make sure the problem occurs **only** when PDF++ is enabled. Otherwise, it is likely to be a bug of Obsidian itself and should be reported on the [forum](https://forum.obsidian.md/c/bug-reports) instead.
+        - Changing some options requires reopening PDF files or reloading the plugin to take effect. If it seems something is not working, first try reopening the vault. If it does not help, please file a bug report.
+        - **Please fill in all the required fields**. Identifying where the problem comes from is extremely difficult if any of them are missing. A bug report that does not follow the template and the instructions may be closed.
+        - If you have multiple problems to report, please create separate bug reports for each of them instead of including all in a single issue. It makes it easier to track issues.
+        - Be nice. Describe only the objective facts and please do not include extra words like "this is annoying".
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: 'Describe the detailed steps to reproduce the behavior **IN A MINIMAL VAULT**. If possible, attach a PDF file where you face the problem. If you mind sharing the PDF publically, send it via email: ushio@ms.k.u-tokyo.ac.jp.'
+      placeholder: |
+        1. Go to '...'
+        2. Click on '....'
+        3. Scroll down to '....'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: 'What do you expect to happen after the steps you described above?'
+      placeholder: 
+    validations:
+      required: true    
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Instead of the expected behavior, what happened?
+      placeholder: 
+    validations:
+      required: true    
+  - type: textarea
+    id: screen-capture
+    attributes:
+      label: Screen recordings or screenshots
+      description: "Add screen recordings that capture the situation in which the bug is happening **IN THE MINIMAL VAULT**. If it's difficult, add screenshots instead."
+      placeholder: 
+    validations:
+      required: true
+  - type: textarea
+    id: debug-info
+    attributes:
+      label: Debug info
+      description: "From the command palette **IN THE MINIMAL VAULT**, run the command `PDF++: Copy debug info` and paste the result here."
+      placeholder: Please do not omit this as it is crucial for debugging. Thanks!
+    validations:
+      required: true
+  - type: textarea
+    id: error
+    attributes:
+      label: Error messages (optional)
+      description: If you are on desktop, open the developer tool by `Ctrl`+`Shift`+`I` (or `Cmd`+`Option`+`I` on macOS) and open the `Console` tab. If you are on mobile, install the [vConsole](https://obsidian.md/plugins?id=vconsole) plugin and tap the "vConsole" button to open the developer console. Do you see any error message on a red background? If so, take a screenshot and paste it here.
