@@ -104,6 +104,20 @@ export class ScholarAnnotationsView extends ItemView {
             return;
         }
 
+        const searchInput = header.createEl('input', {
+            cls: 'scholar-sidebar-search',
+            attr: { type: 'search', placeholder: 'Filter annotations…' },
+        });
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            for (const annotation of result.annotations) {
+                const card = this.cardEls.get(annotation.subpath);
+                if (!card) continue;
+                const haystack = `${annotation.text} ${annotation.comment} ${annotation.color ?? ''} p.${annotation.pageLabel}`.toLowerCase();
+                card.toggleClass('is-hidden-by-filter', !!query && !haystack.includes(query));
+            }
+        });
+
         const noteLink = container.createDiv('scholar-sidebar-notelink');
         const openNote = noteLink.createEl('a', { text: `Open annotation note (${result.annotations.length})` });
         openNote.addEventListener('click', () => {

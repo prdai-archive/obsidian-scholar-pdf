@@ -931,3 +931,12 @@ body.pdf-plus-vim-hint-inverted {
         border-color: var(--scholar-card-accent);
     }
 }
+
+.scholar-sidebar-search {
+    width: 100%;
+    font-size: var(--font-ui-small);
+}
+
+.scholar-card.is-hidden-by-filter {
+    display: none;
+}

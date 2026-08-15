@@ -158,6 +158,19 @@ export default class PDFPlus extends Plugin {
 		this.addRibbonIcon('highlighter', 'Open annotations sidebar', () => this.openScholarSidebar());
 
 		this.registerScholarSelectionPopup();
+
+		// rename-safety: when a PDF is renamed, move its annotation file along with it
+		// (Obsidian's link updater then fixes the links inside the file)
+		this.registerEvent(this.app.vault.on('rename', async (file, oldPath) => {
+			if (!(file instanceof TFile) || file.extension !== 'pdf') return;
+			const folder = this.settings.scholarAnnotationFolder || 'annotations';
+			const oldBasename = oldPath.split('/').pop()!.replace(/\.pdf$/, '');
+			const oldNotePath = `${folder}/${oldBasename}.md`;
+			const note = this.app.vault.getFileByPath(oldNotePath);
+			if (note && !this.app.vault.getFileByPath(this.scholar.annotationFilePath(file))) {
+				await this.app.fileManager.renameFile(note, this.scholar.annotationFilePath(file));
+			}
+		}));
 	}
 
 	/**

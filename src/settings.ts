@@ -1635,6 +1635,16 @@ export class PDFPlusSettingTab extends PluginSettingTab {
 		});
 
 
+		this.addHeading('Annotations', 'scholar', 'lucide-highlighter');
+		this.addTextSetting('scholarAnnotationFolder', 'annotations')
+			.setName('Annotation folder')
+			.setDesc('Vault folder where per-PDF annotation notes are created.');
+		this.addToggleSetting('scholarAskForComment')
+			.setName('Ask for a comment when annotating')
+			.setDesc('"Annotate selection" opens a small comment input. Turn off to save silently.');
+		this.addToggleSetting('scholarOpenSidebarOnAnnotate')
+			.setName('Open the annotations sidebar after annotating');
+
 		this.addHeading('Editing PDF files', 'edit', 'lucide-save')
 			.then((setting) => {
 				this.renderMarkdown([
