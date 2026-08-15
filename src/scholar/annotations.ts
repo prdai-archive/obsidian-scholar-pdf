@@ -18,6 +18,8 @@ export interface ScholarAnnotation {
     created: string;
     /** Full wikilink subpath into the PDF, e.g. `#page=3&selection=...` */
     subpath: string;
+    /** Highlight color name, if one was picked. */
+    color?: string;
 }
 
 const ENTRY_REGEX = /> \[!scholar-annotation\][^\n]*\n(?:>[^\n]*\n)*\^(\S+)/g;
@@ -130,6 +132,7 @@ export class ScholarAnnotations {
                 text: highlight?.[1] ?? '',
                 comment: commentLines.join('\n'),
                 subpath: link?.[1] ?? '',
+                color: link?.[1].match(/&color=([^&\s]+)/)?.[1],
             });
         }
 

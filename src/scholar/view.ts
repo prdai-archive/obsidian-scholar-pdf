@@ -99,15 +99,27 @@ export class ScholarAnnotationsView extends ItemView {
         }
     }
 
+    highlightColorHex(annotation: ScholarAnnotation): string | null {
+        if (!annotation.color) return null;
+        for (const [name, hex] of Object.entries(this.plugin.settings.colors ?? {})) {
+            if (name.toLowerCase() === annotation.color.toLowerCase()) return hex;
+        }
+        return null;
+    }
+
     renderCard(parent: HTMLElement, annotation: ScholarAnnotation, annotationFile: TFile) {
         const card = parent.createDiv('scholar-card');
+        const colorHex = this.highlightColorHex(annotation);
+        if (colorHex) card.style.setProperty('--scholar-card-accent', colorHex);
 
         const meta = card.createDiv('scholar-card-meta');
-        meta.createSpan({ cls: 'scholar-card-page', text: `p.${annotation.pageLabel}` });
-        meta.createSpan({ cls: 'scholar-card-date', text: annotation.created });
+        const page = meta.createSpan({ cls: 'scholar-card-page', text: `Page ${annotation.pageLabel}` });
+        page.addEventListener('click', () => this.jumpTo(annotation));
+        meta.createSpan({ cls: 'scholar-card-date', text: annotation.created.split(' ')[0] ?? annotation.created });
 
         const quote = card.createDiv('scholar-card-quote');
         quote.setText(annotation.text);
+        quote.setAttribute('aria-label', 'Show in PDF');
         quote.addEventListener('click', () => this.jumpTo(annotation));
 
         if (annotation.comment) {
@@ -116,12 +128,15 @@ export class ScholarAnnotationsView extends ItemView {
         }
 
         const actions = card.createDiv('scholar-card-actions');
+        const addAction = (icon: string, label: string, onClick: () => void, cls?: string) => {
+            const button = actions.createDiv({ cls: ['clickable-icon', 'scholar-card-action', ...(cls ? [cls] : [])] });
+            setIcon(button, icon);
+            button.setAttribute('aria-label', label);
+            button.addEventListener('click', onClick);
+        };
 
-        const jump = actions.createEl('a', { text: 'Show in PDF' });
-        jump.addEventListener('click', () => this.jumpTo(annotation));
-
-        const edit = actions.createEl('a', { text: 'Edit' });
-        edit.addEventListener('click', () => {
+        addAction('lucide-locate-fixed', 'Show in PDF', () => this.jumpTo(annotation));
+        addAction('lucide-pencil-line', 'Edit comment', () => {
             new ScholarCommentModal(this.plugin, annotation.text, async (comment) => {
                 if (!this.currentPdf) return;
                 await this.plugin.scholar.deleteAnnotation(this.currentPdf, annotation.id);
@@ -131,11 +146,9 @@ export class ScholarAnnotationsView extends ItemView {
                 });
             }).open();
         });
-
-        const del = actions.createEl('a', { cls: 'scholar-card-delete', text: 'Delete' });
-        del.addEventListener('click', async () => {
+        addAction('lucide-trash-2', 'Delete', async () => {
             if (this.currentPdf) await this.plugin.scholar.deleteAnnotation(this.currentPdf, annotation.id);
-        });
+        }, 'scholar-card-delete');
     }
 
     jumpTo(annotation: ScholarAnnotation) {

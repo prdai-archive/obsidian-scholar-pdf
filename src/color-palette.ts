@@ -158,6 +158,10 @@ export class ColorPalette extends PDFPlusComponent {
             this.lib.copyLink.writeHighlightAnnotationToSelectionIntoFileAndCopyLink(false, { copyFormat: template }, name ?? undefined);
         } else {
             this.lib.copyLink.copyLinkToSelection(false, { copyFormat: template }, name ?? undefined);
+            // also record a scholar annotation so the click visibly highlights the PDF
+            if (activeWindow.getSelection()?.toString()) {
+                this.plugin.scholarAnnotateSelectionQuick(name ?? undefined);
+            }
         }
 
         evt.preventDefault();
