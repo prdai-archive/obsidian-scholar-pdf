@@ -672,7 +672,7 @@ body {
 .scholar-card {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
-    background-color: var(--background-secondary);
+    background-color: transparent;
     border: 1px solid var(--background-modifier-border);
     border-left: 3px solid var(--scholar-card-accent);
     border-radius: var(--radius-m);
@@ -696,7 +696,7 @@ body {
 .scholar-card-page {
     font-size: var(--font-ui-smaller);
     font-weight: var(--font-semibold);
-    color: var(--text-accent);
+    color: var(--text-muted);
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -723,7 +723,7 @@ body {
 }
 
 .scholar-card-quote:hover {
-    background-color: color-mix(in srgb, var(--scholar-card-accent) 14%, transparent);
+    background-color: var(--background-modifier-hover);
 }
 
 .scholar-card-comment {
