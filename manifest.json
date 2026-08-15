@@ -1,7 +1,7 @@
 {
     "id": "scholar-pdf",
     "name": "Scholar PDF",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "minAppVersion": "1.5.8",
     "description": "PDF viewing + easy annotation for Obsidian. Fork of PDF++ with an Annotator-style annotation sidebar and per-PDF annotation notes.",
     "author": "Claude",
