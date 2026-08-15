@@ -502,12 +502,16 @@ export class PDFPlusContextMenu extends PDFPlusMenu {
         //// Add items ////
 
         if (selectedText) {
+            // capture NOW: by the time a menu item's onClick fires, the DOM
+            // selection may have collapsed (this used to save 1-char highlights)
+            const scholarCapture = plugin.scholar.captureSelection();
+
             this.addItem((item) => {
                 return item
                     .setSection('action')
                     .setTitle('Annotate selection')
                     .setIcon('lucide-highlighter')
-                    .onClick(() => plugin.scholarAnnotateSelection());
+                    .onClick(() => plugin.scholarAnnotateSelection(scholarCapture));
             });
 
             // plain highlight: color the selection, nothing else
@@ -518,7 +522,7 @@ export class PDFPlusContextMenu extends PDFPlusMenu {
                     item.setSection('selection')
                         .setTitle(`Highlight ${name.toLowerCase()}`)
                         .setIcon('lucide-circle')
-                        .onClick(() => plugin.scholarAnnotateSelectionQuick(name));
+                        .onClick(() => plugin.scholarAnnotateSelectionQuick(name, scholarCapture));
                     (item as any).iconEl?.style.setProperty('color', color);
                     return item;
                 });

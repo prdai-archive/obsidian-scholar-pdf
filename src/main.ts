@@ -12,7 +12,7 @@ import { subpathToParams, OverloadParameters, focusObsidian, isTargetHTMLElement
 import { DestArray, PDFEmbed, PDFView, PDFViewerChild, PDFViewerComponent, Rect } from 'typings';
 import { InstallerVersionModal } from 'modals';
 import { PDFExternalLinkPostProcessor, PDFInternalLinkPostProcessor, PDFOutlineItemPostProcessor, PDFThumbnailItemPostProcessor } from 'post-process';
-import { ScholarAnnotations } from 'scholar/annotations';
+import { ScholarAnnotations, ScholarSelectionCapture } from 'scholar/annotations';
 import { ScholarAnnotationsView, SCHOLAR_VIEW_TYPE } from 'scholar/view';
 
 
@@ -242,8 +242,8 @@ export default class PDFPlus extends Plugin {
 	}
 
 	/** Save an annotation for the current selection without prompting for a comment. */
-	scholarAnnotateSelectionQuick(color?: string) {
-		this.scholar.addAnnotationFromSelection('', color);
+	scholarAnnotateSelectionQuick(color?: string, captured?: ScholarSelectionCapture | null) {
+		this.scholar.addAnnotationFromSelection('', color, captured);
 	}
 
 	/** Open the scholar sidebar and flash the card matching the given PDF subpath. */
@@ -255,9 +255,9 @@ export default class PDFPlus extends Plugin {
 		if (view instanceof ScholarAnnotationsView) view.flashCard(subpath);
 	}
 
-	async scholarAnnotateSelection() {
+	async scholarAnnotateSelection(captured?: ScholarSelectionCapture | null) {
 		// yellow is reserved for annotations with comments
-		const annotation = await this.scholar.addAnnotationFromSelection('', 'yellow');
+		const annotation = await this.scholar.addAnnotationFromSelection('', 'yellow', captured);
 		if (!annotation) return;
 		if (this.settings.scholarAskForComment || this.settings.scholarOpenSidebarOnAnnotate) {
 			await this.openScholarSidebar();

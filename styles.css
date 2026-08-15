@@ -613,6 +613,29 @@ body {
 }
 
 
+.scholar-annotate-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--size-4-2);
+    cursor: pointer;
+    background-color: var(--background-primary);
+    color: var(--text-normal);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: var(--radius-m);
+    padding: var(--size-4-2) var(--size-4-3);
+    font-weight: var(--font-medium);
+}
+
+.scholar-annotate-button:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.scholar-annotate-button .svg-icon {
+    width: 14px;
+    height: 14px;
+}
+
 .scholar-sidebar-empty {
     padding: var(--size-4-6) var(--size-4-4);
     color: var(--text-faint);
@@ -648,11 +671,11 @@ body {
 .scholar-card {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
-    /* dark card fill + left accent bar; locked so no state can tint it */
+    /* dark card fill + subtle border + left accent bar; locked so no state can tint it */
     background: #161616 !important;
-    border: none;
+    border: 1px solid var(--background-modifier-border);
     border-left: 3px solid var(--scholar-card-accent);
-    border-radius: 0;
+    border-radius: var(--radius-m);
     border-radius: var(--radius-m);
     padding: var(--size-4-3);
     transition: border-color 100ms ease, box-shadow 100ms ease;

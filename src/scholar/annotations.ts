@@ -24,6 +24,14 @@ export interface ScholarAnnotation {
 
 const ENTRY_REGEX = /> \[!scholar-annotation\][^\n]*\n(?:>[^\n]*\n)*\^(\S+)/g;
 
+export interface ScholarSelectionCapture {
+    file: TFile;
+    subpath: string;
+    page: number;
+    pageLabel: string;
+    text: string;
+}
+
 export class ScholarAnnotations {
     constructor(public plugin: PDFPlus) { }
 
@@ -76,13 +84,26 @@ export class ScholarAnnotations {
         return '\n' + lines.join('\n') + '\n';
     }
 
-    async addAnnotationFromSelection(comment: string, color?: string): Promise<ScholarAnnotation | null> {
-        const variables = this.plugin.lib.copyLink.getTemplateVariables(color ? { color: color.toLowerCase() } : {});
-        if (!variables || !variables.text) {
+    /**
+     * Capture the current PDF text selection. Call this synchronously while the
+     * selection is still alive (menu clicks and async gaps can collapse it,
+     * which used to record 1-character highlight ranges).
+     */
+    captureSelection(): ScholarSelectionCapture | null {
+        const variables = this.plugin.lib.copyLink.getTemplateVariables({});
+        if (!variables || !variables.text) return null;
+        const { file, subpath, page, pageLabel, text } = variables;
+        return { file, subpath, page, pageLabel, text };
+    }
+
+    async addAnnotationFromSelection(comment: string, color?: string, captured?: ScholarSelectionCapture | null): Promise<ScholarAnnotation | null> {
+        const capture = captured ?? this.captureSelection();
+        if (!capture) {
             new Notice(`${this.plugin.manifest.name}: select text in a PDF first`);
             return null;
         }
-        const { file, subpath, page, pageLabel, text } = variables;
+        const { file, page, pageLabel, text } = capture;
+        const subpath = color ? `${capture.subpath}&color=${color.toLowerCase()}` : capture.subpath;
 
         const annotation: ScholarAnnotation = {
             id: this.generateId(),
