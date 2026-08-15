@@ -4,6 +4,8 @@ Read and annotate PDFs inside [Obsidian](https://obsidian.md) without friction. 
 
 Scholar PDF is a fork of the excellent [PDF++](https://github.com/RyotaUshio/obsidian-pdf-plus) that adds an [Annotator](https://github.com/elias-sundqvist/obsidian-annotator)-style annotation experience on top: a floating selection popup, an annotation card sidebar, and one markdown annotation file per PDF. It works on any PDF — books, papers, manuals — with zero setup.
 
+![Scholar PDF: highlights in the PDF with color-accented annotation cards in the sidebar](docs/screenshot.png)
+
 ## Features
 
 ### One-click highlighting
