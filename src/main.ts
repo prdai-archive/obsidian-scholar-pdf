@@ -12,9 +12,7 @@ import { subpathToParams, OverloadParameters, focusObsidian, isTargetHTMLElement
 import { DestArray, PDFEmbed, PDFView, PDFViewerChild, PDFViewerComponent, Rect } from 'typings';
 import { InstallerVersionModal } from 'modals';
 import { PDFExternalLinkPostProcessor, PDFInternalLinkPostProcessor, PDFOutlineItemPostProcessor, PDFThumbnailItemPostProcessor } from 'post-process';
-import { BibliographyManager } from 'bib';
-import { DataviewInlineFieldsModal, withFilesWithInlineFields } from 'lib/dataview';
-import { ScholarAnnotations, ScholarCommentModal } from 'scholar/annotations';
+import { ScholarAnnotations } from 'scholar/annotations';
 import { ScholarAnnotationsView, SCHOLAR_VIEW_TYPE } from 'scholar/view';
 
 
@@ -73,8 +71,6 @@ export default class PDFPlus extends Plugin {
 	lastAnnotationPopupChild: PDFViewerChild | null = null;
 	/** Stores the file and the explicit destination array corresponding to the last link copied with the "Copy link to current page view" command */
 	lastCopiedDestInfo: { file: TFile, destArray: DestArray } | { file: TFile, destName: string } | null = null;
-	vimrc: string | null = null;
-	citationIdRegex: RegExp;
 	/** Maps a `div.pdf-container` element to the corresponding `PDFViewerChild` object. */
 	// In most use cases of this map, the goal is also achieved by using lib.workspace.iteratePDFViewerChild.
 	// However, **before PDF++ 0.40.18**, a PDF embed inside a Canvas text node cannot be handled by the function, so we needed this map.
@@ -89,7 +85,6 @@ export default class PDFPlus extends Plugin {
 	obsidianHasFocusBug: boolean;
 	/** Whether the current version of Obsidian has the text selection bug (see https://github.com/RyotaUshio/obsidian-pdf-plus/discussions/450). */
 	obsidianHasTextSelectionBug: boolean;
-	requiresDataviewInlineFieldsMigration = false;
 	isDebugMode: boolean = false;
 
 	async onload() {
@@ -128,7 +123,6 @@ export default class PDFPlus extends Plugin {
 		this.registerStyleSettings();
 
 		this.checkDeprecatedSettings();
-		this.checkDataviewInlineFields();
 
 		this.registerAutoCheckForUpdates();
 
@@ -261,50 +255,20 @@ export default class PDFPlus extends Plugin {
 		if (view instanceof ScholarAnnotationsView) view.flashCard(subpath);
 	}
 
-	scholarAnnotateSelection() {
-		const selection = activeWindow.getSelection();
-		const text = selection?.toString() ?? '';
-		if (!text) {
-			new Notice(`${this.manifest.name}: select text in a PDF first`);
-			return;
+	async scholarAnnotateSelection() {
+		// yellow is reserved for annotations with comments
+		const annotation = await this.scholar.addAnnotationFromSelection('', 'yellow');
+		if (!annotation) return;
+		if (this.settings.scholarAskForComment || this.settings.scholarOpenSidebarOnAnnotate) {
+			await this.openScholarSidebar();
 		}
-		const save = async (comment: string) => {
-			// yellow is reserved for annotations with comments
-			const saved = await this.scholar.addAnnotationFromSelection(comment, 'yellow');
-			if (saved && this.settings.scholarOpenSidebarOnAnnotate) {
-				await this.openScholarSidebar();
-			}
-		};
 		if (this.settings.scholarAskForComment) {
-			new ScholarCommentModal(this, this.lib.toSingleLine(text), save).open();
-		} else {
-			save('');
+			const leaf = this.app.workspace.getLeavesOfType(SCHOLAR_VIEW_TYPE)[0];
+			const view = leaf?.view;
+			if (view instanceof ScholarAnnotationsView) view.startInlineComment(annotation.subpath);
 		}
 	}
 
-	async onunload() {
-		await this.cleanUpResources();
-	}
-
-	/** Perform clean-ups not registered explicitly. */
-	async cleanUpResources() {
-		await this.cleanUpAnystyleFiles();
-	}
-
-	/** Clean up the AnyStyle input files and their directory (.obsidian/plugins/pdf-plus/anystyle) */
-	async cleanUpAnystyleFiles() {
-		const adapter = this.app.vault.adapter;
-		if (Platform.isDesktopApp && adapter instanceof FileSystemAdapter) {
-			const anyStyleInputDir = this.getAnyStyleInputDir();
-			if (anyStyleInputDir) {
-				try {
-					await adapter.rmdir(anyStyleInputDir, true);
-				} catch (err) {
-					if (err.code !== 'ENOENT') throw err;
-				}
-			}
-		}
-	}
 
 	checkVersion() {
 		// See:
@@ -326,7 +290,6 @@ export default class PDFPlus extends Plugin {
 
 	private addIcons() {
 		// fill="currentColor" is necessary for the icon to inherit the color of the parent element!
-		addIcon('vim', '<text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="48" fill="currentColor" style="letter-spacing:2; font-weight:bold;">VIM</text>');
 	}
 
 	getDefaultSettings() {
@@ -341,16 +304,6 @@ export default class PDFPlus extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign(this.getDefaultSettings(), await this.loadData());
-
-		this.setCitationIdRegex();
-
-		// The AnyStyle path had been saved in data.json until v0.39.3, but now it's saved in the local storage
-		if (!this.settings.anystylePath) {
-			const anystylePathFromLocalStorage = this.loadLocalStorage('anystylePath');
-			if (typeof anystylePathFromLocalStorage === 'string') {
-				this.settings.anystylePath = anystylePathFromLocalStorage;
-			}
-		}
 
 		/** Correct invalid settings */
 		if (this.settings.defaultDisplayTextFormatIndex < 0 || this.settings.defaultDisplayTextFormatIndex >= this.settings.displayTextFormats.length) {
@@ -544,45 +497,8 @@ export default class PDFPlus extends Plugin {
 		settingIdsToCheck.forEach(checkNamedTemplate);
 	}
 
-	async checkDataviewInlineFields() {
-		withFilesWithInlineFields(this, (files) => {
-			if (files.length === 0) {
-				this.requiresDataviewInlineFieldsMigration = false;
-				return;
-			}
-
-			this.requiresDataviewInlineFieldsMigration = true;
-
-			const notice = new Notice(
-				createFragment((el) => el.append(
-					`PDF++: Please consider moving the "${this.settings.proxyMDProperty}" Dataview inline fields to the properties (YAML frontmatter).`,
-					createEl('br'),
-					'Click ',
-					createEl('a', {
-						text: 'here'
-					}, (a) => {
-						a.onclick = () => {
-							new DataviewInlineFieldsModal(this, files)
-								.open();
-						};
-					}),
-					' for more details.',
-				)),
-				0
-			);
-			notice.containerEl.addClass('pdf-plus-deprecated-setting-notice');
-			notice.messageEl.setCssStyles({
-				color: 'var(--text-warning)',
-			});
-		});
-	}
-
 	async saveSettings() {
 		const settings: any = Object.assign({}, this.settings);
-
-		// AnyStyle path: save to local storage, not to data.json
-		this.saveLocalStorage('anystylePath', settings.anystylePath);
-		delete settings.anystylePath;
 
 		await this.saveData(settings);
 	}
@@ -593,13 +509,6 @@ export default class PDFPlus extends Plugin {
 
 	saveLocalStorage(key: string, value?: any) {
 		this.app.saveLocalStorage(this.manifest.id + '-' + key, value);
-	}
-
-	setCitationIdRegex() {
-		const sources = this.settings.citationIdPatterns
-			.split(/\r?\n/)
-			.filter((line) => line.trim());
-		this.citationIdRegex = new RegExp(sources.join('|'));
 	}
 
 	/**
@@ -894,18 +803,6 @@ export default class PDFPlus extends Plugin {
 			}
 		}));
 
-		// Keep the vimrc content up-to-date
-		this.registerEvent(this.app.vault.on('modify', async (file) => {
-			if (file instanceof TFile && file.path === this.settings.vimrcPath) {
-				this.vimrc = await this.app.vault.read(file);
-			}
-		}));
-
-		// Clean up other resources when the app quits
-		this.registerEvent(this.app.workspace.on('quit', async () => {
-			await this.cleanUpResources();
-		}));
-
 		// 
 		// https://github.com/RyotaUshio/obsidian-pdf-plus/issues/285
 		this.registerEvent(this.app.workspace.on('editor-drop', (evt, editor, info) => this.lib.dummyFileManager.createDummyFilesOnEditorDrop(evt, editor, info)));
@@ -953,12 +850,7 @@ export default class PDFPlus extends Plugin {
 
 		this.registerHoverLinkSource(PDFInternalLinkPostProcessor.HOVER_LINK_SOURCE_ID, {
 			defaultMod: true,
-			display: 'PDF++: internal links in PDF (except for citations)'
-		});
-
-		this.registerHoverLinkSource(BibliographyManager.HOVER_LINK_SOURCE_ID, {
-			defaultMod: false,
-			display: 'PDF++: citation links in PDF'
+			display: 'PDF++: internal links in PDF'
 		});
 
 		this.registerHoverLinkSource(PDFExternalLinkPostProcessor.HOVER_LINK_SOURCE_ID, {
@@ -1074,13 +966,5 @@ export default class PDFPlus extends Plugin {
 		const tab = this.app.setting.openTabById('hotkeys');
 		tab.setQuery(query ?? this.manifest.id);
 		return tab;
-	}
-
-	getAnyStyleInputDir() {
-		const pdfPlusDirPath = this.manifest.dir;
-		if (pdfPlusDirPath) {
-			return pdfPlusDirPath + '/anystyle';
-		}
-		return null;
 	}
 }

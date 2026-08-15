@@ -8,7 +8,6 @@ import { InstallerVersionModal, PAGE_LABEL_UPDATE_METHODS, PageLabelUpdateMethod
 import { ScrollMode, SidebarView, SpreadMode } from 'pdfjs-enums';
 import { Menu } from 'obsidian';
 import { PDFExternalLinkPostProcessor, PDFInternalLinkPostProcessor, PDFOutlineItemPostProcessor, PDFThumbnailItemPostProcessor } from 'post-process';
-import { BibliographyManager } from 'bib';
 
 
 const SELECTION_BACKLINK_VISUALIZE_STYLE = {
@@ -73,12 +72,6 @@ export interface NamedTemplate {
 }
 
 export const DEFAULT_BACKLINK_HOVER_COLOR = 'green';
-
-const ACTION_ON_CITATION_HOVER = {
-	'none': 'Same as other internal links',
-	'pdf-plus-bib-popover': 'PDF++\'s custom bibliography popover',
-	'google-scholar-popover': 'Google Scholar popover',
-} as const;
 
 const MOBILE_COPY_ACTIONS = {
 	'text': 'Copy text',
@@ -277,12 +270,6 @@ export interface PDFPlusSettings {
 	hoverableDropdownMenuInToolbar: boolean;
 	zoomLevelInputBoxInToolbar: boolean;
 	popoverPreviewOnExternalLinkHover: boolean;
-	actionOnCitationHover: keyof typeof ACTION_ON_CITATION_HOVER;
-	anystylePath: string;
-	enableBibInEmbed: boolean;
-	enableBibInHoverPopover: boolean;
-	enableBibInCanvas: boolean;
-	citationIdPatterns: string;
 	copyAsSingleLine: boolean;
 	removeWhitespaceBetweenCJChars: boolean;
 	// Follows the same format as Obsidian's "Default location for new attachments
@@ -291,21 +278,6 @@ export interface PDFPlusSettings {
 	dummyFileFolderPath: string;
 	externalURIPatterns: string[];
 	modifierToDropExternalPDFToCreateDummy: Modifier[];
-	vim: boolean;
-	vimrcPath: string;
-	vimVisualMotion: boolean;
-	vimScrollSize: number;
-	vimLargerScrollSizeWhenZoomIn: boolean;
-	vimContinuousScrollSpeed: number;
-	vimSmoothScroll: boolean;
-	vimHlsearch: boolean;
-	vimIncsearch: boolean;
-	enableVimInContextMenu: boolean;
-	enableVimOutlineMode: boolean;
-	vimSmoothOutlineMode: boolean;
-	vimHintChars: string;
-	vimHintArgs: string;
-	PATH: string;
 	autoCheckForUpdates: boolean;
 	fixObsidianTextSelectionBug: boolean;
 	scholarAnnotationFolder: string;
@@ -573,12 +545,6 @@ export const DEFAULT_SETTINGS: PDFPlusSettings = {
 	hoverableDropdownMenuInToolbar: true,
 	zoomLevelInputBoxInToolbar: true,
 	popoverPreviewOnExternalLinkHover: true,
-	actionOnCitationHover: 'pdf-plus-bib-popover',
-	anystylePath: '',
-	enableBibInEmbed: false,
-	enableBibInHoverPopover: false,
-	enableBibInCanvas: true,
-	citationIdPatterns: '^cite.\n^bib\\d+$',
 	copyAsSingleLine: true,
 	removeWhitespaceBetweenCJChars: true,
 	dummyFileFolderPath: '',
@@ -587,21 +553,6 @@ export const DEFAULT_SETTINGS: PDFPlusSettings = {
 		'https://arxiv.org/pdf/.*'
 	],
 	modifierToDropExternalPDFToCreateDummy: ['Shift'],
-	vim: false,
-	vimrcPath: '',
-	vimVisualMotion: true,
-	vimScrollSize: 40,
-	vimLargerScrollSizeWhenZoomIn: true,
-	vimContinuousScrollSpeed: 1.2,
-	vimSmoothScroll: true,
-	vimHlsearch: true,
-	vimIncsearch: true,
-	enableVimInContextMenu: true,
-	enableVimOutlineMode: true,
-	vimSmoothOutlineMode: true,
-	vimHintChars: 'hjklasdfgyuiopqwertnmzxcvb',
-	vimHintArgs: 'all',
-	PATH: '',
 	autoCheckForUpdates: true,
 	fixObsidianTextSelectionBug: true,
 };
@@ -1980,11 +1931,7 @@ export class PDFPlusSettingTab extends PluginSettingTab {
 		);
 		this.addToggleSetting('usePageUpAndPageDown')
 			.setName('Use PageUp/PageDown key to go to previous/next page')
-			.setDesc(createFragment((el) => {
-				el.appendText('You need to reopen PDF viewers after changing this option. Note that you can achieve the same thing (and even more advanced stuff) using ');
-				el.appendChild(this.createLinkToHeading('vim', 'Vim keybindings'));
-				el.appendText('.');
-			}));
+			.setDesc('You need to reopen PDF viewers after changing this option.');
 
 		this.addHeading('Context menu in PDF viewer', 'context-menu', 'lucide-mouse-pointer-click')
 			.setDesc('(Desktop & tablet only) Customize the behavior of the context menu that pops up when you right-click in the PDF viewer. For mobile users, see also the next section.');
@@ -2061,9 +2008,6 @@ export class PDFPlusSettingTab extends PluginSettingTab {
 										el.appendChild(this.createLinkTo('enablePDFEdit', 'PDF editing'));
 										el.appendText(' to be enabled.');
 									}));
-								}
-								else if (section.id === 'link') {
-									setting.setDesc('"Search on Google Scholar": Available when right-clicking citation links in PDFs.');
 								}
 								else if (section.id === 'speech') {
 									setting.setDesc(createFragment((el) => {
@@ -2229,8 +2173,6 @@ export class PDFPlusSettingTab extends PluginSettingTab {
 				this.renderMarkdown([
 					'Create a markdown file with this property to associate it with a PDF file. The PDF file is specified by a link, e.g. `[[file.pdf]]`.',
 					'It can be used to store properties/metadata that can be used when copying links.',
-					'',
-					'<span style="color: var(--text-warning);">[Dataview](obsidian://show-plugin?id=dataview)\'s inline field syntax such as `' + this.plugin.settings.proxyMDProperty + ':: [[file.pdf]]` is supported for the time being, but it is deprecated and will likely not work in the future.</span>',
 					'',
 					'Remarks:',
 					'- Make sure the associated markdown file can be uniquely identified. For example, if you have two markdown files `file1.md` and `file2.md` and both of their `' + this.plugin.settings.proxyMDProperty + '` properties point to the same PDF file, PDF++ cannot determine which markdown file is associated with `file.pdf`. However, PDF++ v1.0.0 or later will add support for this.',
@@ -2606,74 +2548,6 @@ export class PDFPlusSettingTab extends PluginSettingTab {
 					.setName('Border color of internal links')
 					.setDesc('Specify the border color of PDF internal links that you create by "Paste copied link to selection".');
 			}
-		}
-
-
-		this.addHeading('Citations in PDF (experimental)', 'citation', 'lucide-graduation-cap')
-			.then((setting) => {
-				this.renderMarkdown([
-					'Enjoy supercharged experiences of working with citations in PDF files, just like in [Google Scholar\'s PDF viewer](https://scholar.googleblog.com/2024/03/supercharge-your-pdf-reading-follow.html).',
-					'',
-					'The current implementation is based on some pretty primitive hand-crafted rules, and there is a lot of room for improvement. Code contribution is much appreciated!'
-				], setting.descEl);
-			});
-		{
-			this.addDropdownSetting('actionOnCitationHover', ACTION_ON_CITATION_HOVER, () => this.events.trigger('update'))
-				.setName(`Hover(+${modKey}) on a citation link to show...`)
-				.then((setting) => {
-					this.renderMarkdown([
-						`- **${ACTION_ON_CITATION_HOVER['pdf-plus-bib-popover']}**: ` + ' Recommended. It works without any additional stuff, but you can further boost the visibility by installing [AnyStyle](https://github.com/inukshuk/anystyle) (desktop only).',
-						`- **${ACTION_ON_CITATION_HOVER['google-scholar-popover']}**: ` + ' Requires [Surfing](obsidian://show-plugin?id=surfing) ver. 0.9.9 or higher enabled. Be careful not to exceed the rate limit of Google Scholar.',
-					], setting.descEl);
-				});
-			this.showConditionally(
-				this.addRequireModKeyOnHoverSetting(BibliographyManager.HOVER_LINK_SOURCE_ID),
-				() => this.plugin.settings.actionOnCitationHover !== 'none'
-			);
-			this.showConditionally(
-				this.addSetting('anystylePath')
-					.setName('AnyStyle path')
-					.addText((text) => {
-						text.setPlaceholder('anystyle')
-							.setValue(this.plugin.settings.anystylePath)
-							.onChange((value) => {
-								this.plugin.settings.anystylePath = value;
-								this.plugin.saveLocalStorage('anystylePath', value);
-							});
-					})
-					.then((setting) => {
-						(setting.components[0] as TextComponent).inputEl.size = 35;
-						this.renderMarkdown([
-							'The path to the [AnyStyle](https://github.com/inukshuk/anystyle) executable. ',
-							'',
-							'PDF++ extracts the bibliography text from the PDF file for each citation link and uses AnyStyle to convert the extracted text into a structured metadata.',
-							'It works just fine without AnyStyle, but you can further boost the visibility by installing it and providing its path here.',
-							'',
-							'Note: This setting is saved in the [local storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) instead of `data.json` in the plugin folder.'
-						], setting.descEl);
-					}),
-				() => Platform.isDesktopApp && this.plugin.settings.actionOnCitationHover === 'pdf-plus-bib-popover'
-			);
-
-			this.showConditionally(
-				this.addTextAreaSetting('citationIdPatterns', undefined, () => this.plugin.setCitationIdRegex())
-					.setName('Citation ID patterns')
-					.setDesc('You don\'t need to care about this option in most use cases - just leave it to the default value. For advanced users: most internal links in PDF files use so-called destination names to specify the target location. This option allows you to specify the regular expressions (separated by line breaks) that determine whether a given internal link is a citation link based on the dsetination name.'),
-				() => this.plugin.settings.actionOnCitationHover !== 'none'
-			);
-
-			this.showConditionally(
-				[
-					this.addDesc('Try turning off the following options if you experience performance issues.'),
-					this.addToggleSetting('enableBibInEmbed')
-						.setName('Enable bibliography extraction in PDF embeds'),
-					this.addToggleSetting('enableBibInCanvas')
-						.setName('Enable bibliography extraction in Canvas'),
-					this.addToggleSetting('enableBibInHoverPopover')
-						.setName('Enable bibliography extraction in hover popover previews'),
-				],
-				() => this.plugin.settings.actionOnCitationHover !== 'none',
-			);
 		}
 
 
@@ -3156,189 +3030,6 @@ export class PDFPlusSettingTab extends PluginSettingTab {
 			});
 
 
-		this.addHeading('Vim keybindings', 'vim', 'vim')
-			.then((setting) =>
-				this.renderMarkdown(
-					'Tracked at [this GitHub issue](https://github.com/RyotaUshio/obsidian-pdf-plus/issues/119).',
-					setting.descEl
-				)
-			);
-
-		this.addSetting()
-			.then((setting) => {
-				this.renderMarkdown([
-					'The default keybindings are as follows. You can customize them be creating a "vimrc" file and providing its path in the setting below.',
-					'',
-					'- `j`/`k`/`h`/`l`: Scroll down/up/left/right',
-					'- `J`: Go to next page',
-					'- `K`: Go to previous page',
-					'- `gg`: Go to first page',
-					'- `G`: Go to last page',
-					'- `0`/`^`/`H`: Go to top of current page',
-					'- `$`/`L`: Go to bottom of current page',
-					'- `<C-f>`/`<C-b>`: Scroll down/up as much as the viewer height (`C`=`Ctrl`)',
-					'- `<C-d>`/`<C-u>`: Scroll down/up half as much as the viewer height',
-					'- `/`/`?`: Search forward/backward',
-					'- `n`/`N`: Go to next/previous match',
-					'- `gn`/`gN`: Select search result',
-					'- `+`/`zi`: Zoom in',
-					'- `-`/`zo`: Zoom out',
-					'- `=`/`z0`: Reset zoom',
-					'- `r`: Rotate pages clockwise',
-					'- `R`: Rotate pages counterclockwise',
-					'- `y`: Yank (copy) selected text',
-					`- \`c\`: Run the "${this.plugin.lib.commands.stripCommandNamePrefix(this.plugin.lib.commands.getCommand('copy-link-to-selection').name)}" command`,
-					'- `C`: Show context menu at text selection',
-					'- `o`: Swap the start and end of the selection',
-					'- `:`: Enter command-line mode (experimental)',
-					'- `<Tab>`: Toggle outline (table of contents)',
-					'- `<S-Tab>`: Toggle thumbnails (`S`=`Shift`)',
-					'- `f`: Enter hint mode by running `:hint` (experimental)',
-					'- `<Esc>`: Go back to normal mode, abort search, etc',
-					'',
-					'Many of the commands above can be combined with counts. For example:',
-					'- `2j` scrolls down the page twice as much as `j`.',
-					'- `2J` advances two pages.',
-					'- `10G` takes you to page 10.',
-					'- `150=` sets the zoom level to 150%.'
-				], setting.descEl);
-			});
-		this.addToggleSetting('vim', () => this.events.trigger('update'))
-			.setName('Enable')
-			.setDesc('Reopen the PDF viewers after changing this option.');
-		this.showConditionally([
-			this.addTextSetting('vimrcPath', undefined, () => this.plugin.vimrc = null)
-				.setName('Vimrc file path (optional)')
-				.then(async (setting) => {
-					await this.renderMarkdown([
-						'Only the [Ex commands supported by PDF++](https://github.com/RyotaUshio/obsidian-pdf-plus/blob/main/src/vim/ex-commands.ts) are allowed.',
-						'',
-						'Example (not necessarily recommendations):',
-						'```',
-						'" Use j/k, instead of J/K, to go to the next page',
-						'map j J',
-						'map k K',
-						'',
-						'" JavaScript commands',
-						'" - Hit Ctrl-h in Normal mode to show a message',
-						'nmap <C-h> :js alert("Hello, world!")',
-						'" - Hit Ctrl-h in Visual mode to run a .js file',
-						'vmap <C-h> :jsfile filename.js',
-						'',
-						'" Obsidian commands',
-						'" - Open the current PDF in the OS-default app by hitting d, e, and then f',
-						'map def :obcommand open-with-default-app:open',
-						'" - Go back and forth the history with Ctrl-o and Ctrl-i',
-						'map <C-o> :obcommand app:go-back',
-						'map <C-i> :obcommand app:go-forward',
-						'```',
-						'',
-						'After changing the path or the file content, you need to reopen the PDF viewer. If the vimrc file is a hidden file or is under a hidden folder, you need to reload PDF++ or the app.',
-					], setting.descEl);
-
-					const inputEl = (setting.components[0] as TextComponent).inputEl;
-					new FuzzyFileSuggest(this.app, inputEl)
-						.onSelect(({ item: file }) => {
-							this.plugin.settings.vimrcPath = file.path;
-							this.plugin.saveSettings();
-						});
-				}),
-			this.addHeading('Visual mode', 'vim-visual'),
-			this.addToggleSetting('vimVisualMotion')
-				.setName('Use motion keys to adjust text selection')
-				.then((setting) => {
-					this.renderMarkdown([
-						'When some text is selected, you can modify the range of selection using the `j,` `k`, `h`, `l`, `w`, `e`, `b`, `0`, `^`, `$`, `H`, and `L` keys, similarly to Vim\'s visual mode (`H`/`L` are mapped to `^`/`$` by default). If disabled, you can use `j`/`k`/`h`/`l`/`0`/`^`/`$`/`H`/`L` keys to scroll the page regardless of text selection. Reload the viewer or the app after changing this option.',
-						'',
-						'Tips:',
-						'- You can use `o` to swap the start and end of the selection.',
-						'- As you know, `/` and `?` keys initiate search. Pressing `gn`/`gN` after the search will select the search result. You can also use search to extend the current selection to the search result.',
-						'',
-						'Note: On mobile, word-wise motions (`w`/`e`/`b`) might not work as expected around punctuations. Contributions to fix this are welcome!',
-					], setting.descEl);
-				}),
-			this.addHeading('Outline mode', 'vim-outline'),
-			this.addToggleSetting('enableVimOutlineMode')
-				.setName('Enter outline mode when opening PDF outline view')
-				.then((setting) => {
-					this.renderMarkdown([
-						'If enabled, you will enter the outline mode by opening the PDF outline view (from the icon in the toolbar or by `<Tab>`), and you can use the following keybindings, similarly to [Zathura](https://pwmt.org/projects/zathura/)\'s index mode.',
-						'',
-						'- `j`: Move down',
-						'- `k`: Move up',
-						'- `h`: Collapse & move to parent entry',
-						'- `l`: Expand entry & move to child entry',
-						'- `H`: Collapse all entries',
-						'- `L`: Expand all entries',
-						'- `<CR>/<Space>`: Open the selected entry (`<CR>`=`Enter`)',
-						'- `<Esc>`: Close sidebar and go back to normal mode',
-						'',
-						'If disabled, you can use j/k/h/l/H/L keys to scroll the page whether the outline view is opened or not. ',
-						'This option requires reload to take effect.'
-					], setting.descEl);
-				}),
-			this.addToggleSetting('vimSmoothOutlineMode')
-				.setName('Smooth motion in outline mode'),
-			this.addHeading('Command-line mode (experimental)', 'vim-command-line'),
-			this.addSetting()
-				.then((setting) => {
-					this.renderMarkdown([
-						'By pressing `:`, you can enter the command-line mode, where you can execute various commands called "Ex commands"',
-						'',
-						'- You can always go back to normal mode by `<Esc>`.',
-						'- For some commands, you can run `:help :<command>` or `:h :<command>` to see the help message.',
-						'- Use `<Tab>` and `<S-Tab>` to navigate through the suggestions (`S`=`Shift`).',
-						'- Use arrow down/up keys to go back and forth the command history.',
-						'- `<C-u>` clears the command line, and `<C-w>` deletes the last word (`C`=`Ctrl`).',
-						'- `:<page number>` will take you to the <page number>-th page, where the page number always starts from 1. To go to the page with the page label <page label> (e.g. "i, ii, ..., x, 1, 2, ..."), use `:gotopage <page label>` (or `:go <page label>`/`:goto <page label>` in short).',
-						'- `:!<command>` runs the shell command (not supported on mobile). By default, Obsidian does not know the value of the "PATH" environment variable, so you might need to explicitly provide it in the setting below (in the "Misc" section) to run some commands.',
-					], setting.descEl);
-				}),
-			this.addHeading('Hint mode (experimental)', 'vim-hint'),
-			this.addSetting()
-				.then((setting) => {
-					this.renderMarkdown([
-						'Hitting `f` will enter the hint mode, where you can perform certain actions on links, annotations, and backlink highlighting in the PDF page without using the mouse.',
-						'For example, first press `f` to enter the hint mode, and if the link you want to open gets marked with "HK", then hit `h` and then `k` (without `Shift`) to open it.',
-						'',
-						'This is inspired by [Tridactyl](https://github.com/tridactyl/tridactyl)\'s hint mode.',
-						'',
-						'Also check out Style Settings > PDF++ > Vim keybindings > Hint mode.'
-					], setting.descEl);
-				}),
-			this.addTextSetting('vimHintChars')
-				.setName('Characters to use in hint mode')
-				.setDesc('They are used preferentially from left to right, so you might want to put the easier-to-reach keys first. This is the same as Tridactyl\'s "hintchars" option.'),
-			this.addTextSetting('vimHintArgs')
-				.setName('Default arguments for the ":hint" Ex command')
-				.setDesc('Space-separated list of "link"/"annot"/"backlink" or "all". Run ":help :hint" for the details.'),
-			this.addHeading('Context menu', 'vim-context-menu'),
-			this.addToggleSetting('enableVimInContextMenu')
-				.setName('Enable Vim keys in PDF context menus')
-				.setDesc('If enabled, you can use j/k/h/l keys, instead of the arrow keys, to navigate through context menu items in the PDF viewer.'),
-			this.addHeading('Scrolling', 'vim-scroll'),
-			this.addSliderSetting('vimScrollSize', 5, 500, 5)
-				.setName('Scroll size (px) of the jkhl keys')
-				.setDesc('The size of scroll when one of the jkhl keys is pressed once.'),
-			this.addToggleSetting('vimLargerScrollSizeWhenZoomIn')
-				.setName('Increase scroll size when zoomed in'),
-			this.addSliderSetting('vimContinuousScrollSpeed', 0.1, 5, 0.1)
-				.setName('Speed of continuous scroll (px per ms)')
-				.setDesc('The speed of scroll when pressing and holding down the jkhl keys.'),
-			this.addToggleSetting('vimSmoothScroll')
-				.setName('Smooth scroll'),
-			this.addHeading('Search', 'vim-search'),
-			this.addToggleSetting('vimHlsearch')
-				.setName('hlsearch')
-				.setDesc('If enabled, all matches will be highlighted.'),
-			this.addToggleSetting('vimIncsearch')
-				.setName('incsearch')
-				.setDesc('Incremental search: while typing the search query, update the search results after every keystroke. If disabled, the results will be shown only after pressing Enter.')
-		],
-			() => this.plugin.settings.vim
-		);
-
-
 		this.addHeading('Misc', 'misc', 'lucide-more-horizontal');
 		this.addToggleSetting('autoCheckForUpdates', () => this.plugin.checkForUpdatesIfNeeded())
 			.setName('Automatically check for updates')
@@ -3385,19 +3076,6 @@ export class PDFPlusSettingTab extends PluginSettingTab {
 				setting.descEl.appendChild(this.createLinkTo('mobileCopyAction'));
 				setting.descEl.appendText(' option.');
 			});
-		if (Platform.isDesktopApp) {
-			this.addTextAreaSetting('PATH')
-				.then((setting) => {
-					const component = setting.components[0];
-					if (component instanceof TextAreaComponent) {
-						component.inputEl.rows = 8;
-						component.inputEl.cols = 30;
-					}
-				})
-				.setName('"PATH" environment variable')
-				.setDesc('Provide the "PATH" environment variable for PDF++ to run shell commands without the full paths specified. In MacOS and Linux, you can run "echo $PATH" in Terminal and then copy & paste the result here. Currently, it will be used only when you run ":!<command>" in Vim mode.');
-		}
-
 
 		this.addHeading('Style settings', 'style-settings', 'lucide-settings-2')
 			.setDesc('You can find more options in Style Settings > PDF++.')

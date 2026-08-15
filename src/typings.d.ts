@@ -13,8 +13,6 @@ import { BacklinkPanePDFManager } from 'pdf-backlink';
 import { PDFViewerBacklinkVisualizer } from 'backlink-visualizer';
 import { ColorPalette } from 'color-palette';
 import { ScrollMode, SidebarView, SpreadMode } from 'pdfjs-enums';
-import { BibliographyManager } from 'bib';
-import { VimBindings } from 'vim/vim';
 
 
 declare global {
@@ -102,7 +100,6 @@ interface PDFViewerComponent extends Component {
     // Added by this plugin //
     //////////////////////////
     visualizer?: PDFViewerBacklinkVisualizer;
-    vim?: VimBindings;
 }
 
 /**
@@ -179,7 +176,6 @@ interface PDFViewerChild {
     externalFileUrl: string | null;
     /** `annotationHighlight`'s counterpart for rectangle selections. */
     rectHighlight: HTMLElement | null;
-    bib: BibliographyManager | null;
 }
 
 interface PDFHighlight {

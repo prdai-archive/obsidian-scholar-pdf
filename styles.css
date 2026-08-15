@@ -150,21 +150,6 @@ settings:
         step: 10
         default: 140
         format: px
-    -
-        id: pdf-plus-vim
-        title: Vim keybindings
-        type: heading
-        level: 2
-    -
-        id: pdf-plus-vim-hin
-        title: Hint mode
-        type: heading
-        level: 3
-    - 
-        id: pdf-plus-vim-hint-inverted
-        title: Inverted color scheme
-        type: class-toggle
-        default: false
 */
 
 :root {
@@ -605,94 +590,6 @@ body {
     --popover-pdf-height: var(--pdf-plus-pdf-link-like-popover-height, 400px);
 }
 
-.popover.hover-popover.pdf-plus-bib-popover {
-    --popover-width: 400px;
-    --pdf-plus-bib-metadata-font-size: var(--font-ui-small);
-
-    /* Workaround to prevent bib popovers from being covered by Hover Editor
-    when the bib popover is spawned from a hover editor
-    (https://github.com/RyotaUshio/obsidian-pdf-plus/issues/459).
-    Hover Editor decides z-index based on --layer-slides, so we need to set a higher z-index. */
-    z-index: calc(var(--layer-slides) + 1);
-
-    .pdf-plus-bib {
-        padding: var(--size-4-3);
-        font-size: var(--font-ui-medium);
-
-        /* Make text inside citation hover selectable (https://github.com/RyotaUshio/obsidian-pdf-plus/issues/252) */
-        -moz-user-select: text;
-        -webkit-user-select: text;
-        user-select: text;
-
-        .bib-title {
-            font-weight: bold;
-            padding-bottom: var(--size-4-2);
-        }
-
-        .bib-author-year {
-            color: var(--text-muted);
-            text-align: left;
-            font-size: var(--pdf-plus-bib-metadata-font-size);
-        }
-
-        .bib-container-title {
-            color: var(--text-muted);
-            font-style: italic;
-            text-align: left;
-            font-size: var(--pdf-plus-bib-metadata-font-size);
-        }
-
-        .button-container {
-            margin-top: 1em;
-            display: flex;
-            justify-content: space-between;
-            gap: var(--size-4-2);
-            flex-wrap: wrap;
-        }
-    }
-}
-
-.pdf-plus-vim-command {
-    border-top: 1px solid var(--background-modifier-border);
-    /* height: var(--size-4-8); */
-    font-family: monospace;
-
-    input {
-        background: transparent;
-        border: none;
-        outline: none;
-        font-family: monospace;
-        white-space: pre;
-        width: 90%;
-    }
-}
-
-.page.pdf-plus-vim-hint-mode [data-pdf-plus-vim-hint]::after {
-    content: attr(data-pdf-plus-vim-hint);
-    color: var(--pdf-plus-vim-hint-color);
-    text-transform: uppercase;
-    font-size: var(--font-ui-medium);
-    font-weight: bold;
-    background-color: var(--pdf-plus-vim-hint-background-color);
-    border: var(--size-2-1) solid hsl(var(--accent-h), var(--accent-s), var(--accent-l));
-    border-radius: 10%;
-    padding: 0 var(--size-2-2);
-    position: relative;
-    left: 0;
-    top: 0;
-    z-index: 9999;
-}
-
-body {
-    --pdf-plus-vim-hint-color: var(--text-normal);
-    --pdf-plus-vim-hint-background-color: var(--background-primary);
-}
-
-body.pdf-plus-vim-hint-inverted {
-    --pdf-plus-vim-hint-color: var(--text-on-accent);
-    --pdf-plus-vim-hint-background-color: hsl(var(--accent-h), var(--accent-s), var(--accent-l));
-}
-
 /* ===== Scholar annotations sidebar ===== */
 
 .scholar-sidebar {
@@ -868,20 +765,6 @@ body.pdf-plus-vim-hint-inverted {
     color: var(--text-error);
 }
 
-.scholar-modal-highlight {
-    font-size: var(--font-ui-small);
-    border-left: 3px solid var(--text-highlight-bg);
-    background-color: color-mix(in srgb, var(--text-highlight-bg) 14%, transparent);
-    padding: var(--size-4-2);
-    margin-bottom: var(--size-4-3);
-    border-radius: 0 var(--radius-s) var(--radius-s) 0;
-    color: var(--text-muted);
-}
-
-.scholar-modal-comment {
-    width: 100%;
-    resize: vertical;
-}
 
 /* selection popup */
 .scholar-selection-popup {
@@ -939,4 +822,14 @@ body.pdf-plus-vim-hint-inverted {
 
 .scholar-card.is-hidden-by-filter {
     display: none;
+}
+
+.scholar-card-comment-editor {
+    margin-top: var(--size-4-2);
+}
+
+.scholar-card-comment-editor textarea {
+    width: 100%;
+    resize: vertical;
+    font-size: var(--font-ui-small);
 }

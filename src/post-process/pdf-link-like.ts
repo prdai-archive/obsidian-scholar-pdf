@@ -4,7 +4,6 @@ import PDFPlus from 'main';
 import { PDFPlusLib } from 'lib';
 import { AnnotationElement, PDFOutlineTreeNode, PDFViewerChild, PDFJsDestArray } from 'typings';
 import { isMouseEventExternal, isTargetHTMLElement } from 'utils';
-import { BibliographyManager } from 'bib';
 
 
 /**
@@ -210,22 +209,6 @@ export class PDFInternalLinkPostProcessor extends PDFDestinationHolderPostProces
         return null;
     }
 
-    async getLinkText(evt: MouseEvent) {
-        if (this.plugin.settings.actionOnCitationHover === 'google-scholar-popover'
-            && this.lib.requirePluginNewerThan('surfing', '0.9.5')) {
-            const destId = this.getDest();
-            if (this.lib.isCitationId(destId)) {
-                const doc = this.child.pdfViewer.pdfViewer?.pdfDocument;
-                if (doc) {
-                    const url = this.child.bib?.getGoogleScholarSearchUrlFromDest(destId);
-                    if (url) return url;
-                }
-            }
-        }
-
-        return super.getLinkText(evt);
-    }
-
     getDest(): string | PDFJsDestArray {
         return this.linkAnnotationElement.data.dest;
     }
@@ -238,35 +221,11 @@ export class PDFInternalLinkPostProcessor extends PDFDestinationHolderPostProces
         return this.plugin.settings.enableHoverPDFInternalLink;
     }
 
-    isCitationLink() {
-        const destId = this.getDest();
-        return this.lib.isCitationId(destId);
-    }
-
-    get hoverLinkSourceId() {
-        return this.isCitationLink()
-            ? BibliographyManager.HOVER_LINK_SOURCE_ID
-            : PDFInternalLinkPostProcessor.HOVER_LINK_SOURCE_ID;
-    }
-
     shouldRecordHistory() {
         return this.plugin.settings.recordPDFInternalLinkHistory
             && !this.child.opts.isEmbed;
     }
 
-    async customHover(evt: MouseEvent) {
-        if (this.plugin.settings.actionOnCitationHover === 'pdf-plus-bib-popover'
-            && this.child.bib && this.child.bib.isEnabled()) {
-            const destId = this.getDest();
-            if (this.lib.isCitationId(destId)) {
-                this.child.bib.spawnBibPopoverOnModKeyDown(destId, this, evt, this.targetEl);
-                return true;
-            }
-        }
-
-        return false;
-    }
-    
     onHoverPopoverSet(hoverPopover: HoverPopover): void {
         super.onHoverPopoverSet(hoverPopover);
         hoverPopover.hoverEl.addClass('pdf-plus-pdf-internal-link-popover');

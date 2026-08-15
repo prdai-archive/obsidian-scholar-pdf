@@ -1,4 +1,4 @@
-import { Modal, Notice, Setting, TFile, normalizePath } from 'obsidian';
+import { Notice, TFile, normalizePath } from 'obsidian';
 
 import PDFPlus from 'main';
 
@@ -76,11 +76,11 @@ export class ScholarAnnotations {
         return '\n' + lines.join('\n') + '\n';
     }
 
-    async addAnnotationFromSelection(comment: string, color?: string): Promise<boolean> {
+    async addAnnotationFromSelection(comment: string, color?: string): Promise<ScholarAnnotation | null> {
         const variables = this.plugin.lib.copyLink.getTemplateVariables(color ? { color: color.toLowerCase() } : {});
         if (!variables || !variables.text) {
             new Notice(`${this.plugin.manifest.name}: select text in a PDF first`);
-            return false;
+            return null;
         }
         const { file, subpath, page, pageLabel, text } = variables;
 
@@ -100,7 +100,19 @@ export class ScholarAnnotations {
         });
 
         new Notice(`Annotation saved to ${annotationFile.path}`);
-        return true;
+        return annotation;
+    }
+
+    /** Replace an annotation's comment by rewriting its entry in place. */
+    async updateComment(pdf: TFile, annotation: ScholarAnnotation, comment: string): Promise<void> {
+        const path = this.annotationFilePath(pdf);
+        const file = this.app.vault.getFileByPath(path);
+        if (!file) return;
+        const newEntry = this.formatEntry({ ...annotation, comment }, pdf);
+        await this.app.vault.process(file, (data) => {
+            const regex = new RegExp(`\\n?> \\[!scholar-annotation\\][^\\n]*\\n(?:>[^\\n]*\\n)*\\^${annotation.id}\\n?`);
+            return regex.test(data) ? data.replace(regex, newEntry) : data.trimEnd() + '\n' + newEntry;
+        });
     }
 
     async parseAnnotations(pdf: TFile): Promise<{ file: TFile, annotations: ScholarAnnotation[] } | null> {
@@ -149,48 +161,3 @@ export class ScholarAnnotations {
     }
 }
 
-export class ScholarCommentModal extends Modal {
-    comment = '';
-    onSubmit: (comment: string) => void;
-
-    constructor(plugin: PDFPlus, public highlightText: string, onSubmit: (comment: string) => void) {
-        super(plugin.app);
-        this.onSubmit = onSubmit;
-    }
-
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.createEl('div', { text: this.highlightText, cls: 'scholar-modal-highlight' });
-
-        const textarea = contentEl.createEl('textarea', {
-            cls: 'scholar-modal-comment',
-            attr: { placeholder: 'Add a comment (optional)…', rows: '4' },
-        });
-        textarea.focus();
-        textarea.addEventListener('keydown', (evt) => {
-            if (evt.key === 'Enter' && (evt.ctrlKey || evt.metaKey)) {
-                evt.preventDefault();
-                this.submit(textarea.value);
-            }
-        });
-
-        new Setting(contentEl)
-            .addButton((button) => button
-                .setButtonText('Annotate')
-                .setCta()
-                .onClick(() => this.submit(textarea.value)))
-            .addButton((button) => button
-                .setButtonText('Cancel')
-                .onClick(() => this.close()));
-    }
-
-    submit(comment: string) {
-        this.comment = comment;
-        this.close();
-        this.onSubmit(comment);
-    }
-
-    onClose() {
-        this.contentEl.empty();
-    }
-}

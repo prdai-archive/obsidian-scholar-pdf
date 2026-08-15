@@ -6,7 +6,7 @@ import { PDFOutlineMoveModal, PDFOutlineTitleModal, PDFComposerModal, PDFAnnotat
 import { PDFOutlineTreeNode, PDFViewerChild } from 'typings';
 import { PDFViewerBacklinkVisualizer } from 'backlink-visualizer';
 import { PDFBacklinkCache } from 'lib/pdf-backlink-index';
-import { addProductMenuItems, getSelectedItemsRecursive, fixOpenSubmenu, registerVimKeybindsToMenu } from 'utils/menu';
+import { addProductMenuItems, getSelectedItemsRecursive, fixOpenSubmenu } from 'utils/menu';
 import { DEFAULT_SETTINGS, NamedTemplate } from 'settings';
 import { ColorPalette } from 'color-palette';
 import { PDFPlusComponent } from 'lib/component';
@@ -445,9 +445,6 @@ export class PDFPlusContextMenu extends PDFPlusMenu {
         this.setUseNativeMenu(false);
         this.addSections(Object.keys(DEFAULT_SETTINGS.contextMenuConfig));
 
-        if (plugin.settings.enableVimInContextMenu) {
-            registerVimKeybindsToMenu(this);
-        }
     }
 
     static async fromMouseEvent(plugin: PDFPlus, child: PDFViewerChild, evt: MouseEvent) {
@@ -654,23 +651,6 @@ export class PDFPlusContextMenu extends PDFPlusMenu {
                                 });
                         });
 
-                        if (plugin.lib.isCitationId(destId)) {
-                            this.addItem((item) => {
-                                item.setSection('link')
-                                    .setTitle('Search on Google Scholar')
-                                    .setIcon('lucide-search')
-                                    .onClick(() => {
-                                        const url = this.child.bib?.getGoogleScholarSearchUrlFromDest(destId);
-
-                                        if (typeof url !== 'string') {
-                                            new Notice(`${plugin.manifest.name}: Failed to find bibliographic information.`);
-                                            return;
-                                        }
-
-                                        window.open(url, '_blank');
-                                    });
-                            });
-                        }
                     }
 
                     if ('url' in annot.data && typeof annot.data.url === 'string') {
@@ -879,7 +859,6 @@ export class PDFPlusProductMenuComponent extends PDFPlusComponent {
             }
         }), {
             clickableParentItem: true,
-            vim: this.settings.enableVimInContextMenu,
         });
 
         return this;

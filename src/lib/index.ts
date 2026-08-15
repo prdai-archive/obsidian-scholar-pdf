@@ -747,14 +747,6 @@ export class PDFPlusLib {
         return this.getPDFViewerComponent(activeOnly)?.visualizer;
     }
 
-    getBibliographyManager(activeOnly: boolean = false) {
-        return this.getPDFViewerChild(activeOnly)?.bib;
-    }
-
-    getVim(activeOnly: boolean = false) {
-        return this.getPDFViewerComponent(activeOnly)?.vim;
-    }
-
     search(findBar: PDFFindBar, query: string, settings?: Partial<PDFSearchSettings>, findPrevious?: boolean) {
         findBar.showSearch();
         findBar.searchComponent.setValue(query);
@@ -1096,10 +1088,6 @@ export class PDFPlusLib {
         }
 
         return null;
-    }
-
-    isCitationId(dest: string | PDFJsDestArray): dest is string {
-        return typeof dest === 'string' && this.plugin.citationIdRegex.test(dest);
     }
 
     async checkForUpdates(options?: {

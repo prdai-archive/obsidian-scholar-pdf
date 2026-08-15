@@ -82,12 +82,7 @@ export class PDFPlusTemplateProcessor extends TemplateProcessor {
         const app = this.plugin.app;
         let proxyMDs: TFile[] = [];
 
-        // @ts-ignore
-        const dv = app.plugins.plugins.dataview?.api;
-        if (dv) {
-            const proxyMDPages: any[] = dv.pages().where((page: any) => dv.array(page[this.plugin.settings.proxyMDProperty] ?? []).path.includes(pdf.path));
-            proxyMDs = proxyMDPages.map((page) => app.vault.getAbstractFileByPath(page.file.path)).filter((file): file is TFile => file instanceof TFile);
-        } else {
+        {
             const backlinks = app.metadataCache.getBacklinksForFile(pdf);
             for (const sourcePath of backlinks.keys()) {
                 const cache = app.metadataCache.getCache(sourcePath);

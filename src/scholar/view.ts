@@ -1,7 +1,7 @@
 import { ItemView, MarkdownRenderer, TFile, WorkspaceLeaf, setIcon } from 'obsidian';
 
 import PDFPlus from 'main';
-import { ScholarAnnotation, ScholarCommentModal } from './annotations';
+import { ScholarAnnotation } from './annotations';
 
 export const SCHOLAR_VIEW_TYPE = 'scholar-annotations';
 
@@ -12,6 +12,18 @@ export const SCHOLAR_VIEW_TYPE = 'scholar-annotations';
 export class ScholarAnnotationsView extends ItemView {
     currentPdf: TFile | null = null;
     cardEls = new Map<string, HTMLElement>();
+    /** Subpath of the card whose inline comment editor should open on next render. */
+    pendingCommentSubpath: string | null = null;
+
+    startInlineComment(subpath: string, attempt = 0) {
+        this.pendingCommentSubpath = subpath;
+        if (!this.cardEls.has(subpath)) {
+            // wait for the card to be rendered (file modify event triggers render)
+            if (attempt < 5) activeWindow.setTimeout(() => this.startInlineComment(subpath, attempt + 1), 200);
+            return;
+        }
+        this.render();
+    }
 
     flashCard(subpath: string, attempt = 0) {
         let target = this.cardEls.get(subpath);
@@ -154,7 +166,11 @@ export class ScholarAnnotationsView extends ItemView {
         quote.setAttribute('aria-label', 'Show in PDF');
         quote.addEventListener('click', () => this.jumpTo(annotation));
 
-        if (annotation.comment) {
+        const isPending = this.pendingCommentSubpath === annotation.subpath;
+        if (isPending) {
+            this.pendingCommentSubpath = null;
+            this.renderInlineCommentEditor(card, annotation);
+        } else if (annotation.comment) {
             const comment = card.createDiv('scholar-card-comment');
             MarkdownRenderer.render(this.app, annotation.comment, comment, annotationFile.path, this);
         }
@@ -169,18 +185,44 @@ export class ScholarAnnotationsView extends ItemView {
 
         addAction('lucide-locate-fixed', 'Show in PDF', () => this.jumpTo(annotation));
         addAction('lucide-pencil-line', 'Edit comment', () => {
-            new ScholarCommentModal(this.plugin, annotation.text, async (comment) => {
-                if (!this.currentPdf) return;
-                await this.plugin.scholar.deleteAnnotation(this.currentPdf, annotation.id);
-                const pdf = this.currentPdf;
-                await this.app.vault.process(annotationFile, (data) => {
-                    return data.trimEnd() + '\n' + this.plugin.scholar.formatEntry({ ...annotation, comment }, pdf);
-                });
-            }).open();
+            this.pendingCommentSubpath = annotation.subpath;
+            this.render();
         });
         addAction('lucide-trash-2', 'Delete', async () => {
             if (this.currentPdf) await this.plugin.scholar.deleteAnnotation(this.currentPdf, annotation.id);
         }, 'scholar-card-delete');
+    }
+
+    renderInlineCommentEditor(card: HTMLElement, annotation: ScholarAnnotation) {
+        const editor = card.createDiv('scholar-card-comment-editor');
+        const textarea = editor.createEl('textarea', {
+            attr: { placeholder: 'Add a comment… (Enter to save, Esc to cancel)', rows: '2' },
+        });
+        textarea.value = annotation.comment;
+
+        const save = async () => {
+            if (!this.currentPdf) return;
+            const comment = textarea.value.trim();
+            if (comment !== annotation.comment) {
+                await this.plugin.scholar.updateComment(this.currentPdf, annotation, comment);
+            } else {
+                this.render();
+            }
+        };
+
+        textarea.addEventListener('keydown', (evt) => {
+            if (evt.key === 'Enter' && !evt.shiftKey) {
+                evt.preventDefault();
+                save();
+            } else if (evt.key === 'Escape') {
+                evt.preventDefault();
+                this.render();
+            }
+        });
+        textarea.addEventListener('blur', () => save());
+
+        card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        activeWindow.setTimeout(() => textarea.focus(), 0);
     }
 
     jumpTo(annotation: ScholarAnnotation) {

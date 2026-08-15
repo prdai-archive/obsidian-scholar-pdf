@@ -10,11 +10,9 @@ import { PDFInternalLinkPostProcessor, PDFOutlineItemPostProcessor, PDFThumbnail
 import { patchPDFOutlineViewer } from 'patchers';
 import { PDFViewerBacklinkVisualizer } from 'backlink-visualizer';
 import { PDFPlusToolbar } from 'toolbar';
-import { BibliographyManager } from 'bib';
 import { camelCaseToKebabCase, getCharactersWithBoundingBoxesInPDFCoords, getTextLayerInfo, hookInternalLinkMouseEventHandlers, isEmbed, isModifierName, isNonEmbedLike, selectDoubleClickedWord, selectTrippleClickedTextLayerNode, showChildElOnParentElHover } from 'utils';
 import { AnnotationElement, PDFOutlineViewer, PDFViewerComponent, PDFViewerChild, PDFSearchSettings, Rect, PDFAnnotationHighlight, PDFTextHighlight, PDFRectHighlight, ObsidianViewer, PDFPageView } from 'typings';
 import { SidebarView, SpreadMode } from 'pdfjs-enums';
-import { VimBindings } from 'vim/vim';
 import { PDFPlusSettings } from 'settings';
 
 
@@ -113,8 +111,6 @@ const patchPDFViewerComponent = (plugin: PDFPlus, pdfViewerComponent: PDFViewerC
                     });
                 }
 
-                VimBindings.register(plugin, this);
-
                 return ret;
             };
         }
@@ -132,7 +128,6 @@ const patchPDFViewerChild = (plugin: PDFPlus, child: PDFViewerChild) => {
                 this.externalFileUrl = null;
                 this.palette = null;
                 this.rectHighlight = null;
-                this.bib = null;
 
                 if (!this.component) {
                     this.component = plugin.addChild(new Component());
@@ -380,9 +375,6 @@ const patchPDFViewerChild = (plugin: PDFPlus, child: PDFViewerChild) => {
                 if (pdfContainerEl) {
                     plugin.pdfViewerChildren.set(pdfContainerEl, this);
                 }
-
-                this.bib?.unload();
-                this.bib = this.component.addChild(new BibliographyManager(plugin, this));
 
                 // Register post-processors
 

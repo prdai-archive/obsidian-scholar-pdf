@@ -89,18 +89,6 @@ export function capitalize(text: string) {
     return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-/** Get the word at the given position in a Vim-like fashion. Currently incomplete, needs refinement! */
-export function getWordAt(str: string, pos: number) {
-    if (pos < 0 || pos >= str.length) return '';
-
-    let from = Math.max(0, str.slice(0, pos + 1).search(/(?<=[^\s.,][\s.,]+)[^\s.,]*$/));
-    str = str.slice(from);
-    from = Math.max(0, str.search(/[^\s.,]/));
-    str = str.slice(from);
-    const to = str.search(/[\s.,]/);
-    return to === -1 ? str : str.slice(0, to);
-}
-
 // Thanks https://stackoverflow.com/a/6860916/13613783
 export function genId() {
     const S4 = () => (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
@@ -615,15 +603,6 @@ export function isSelectionForward(selection: Selection) {
     return selection.anchorNode === selection.focusNode
         ? selection.anchorOffset < selection.focusOffset
         : selection.anchorNode && selection.focusNode && selection.anchorNode.compareDocumentPosition(selection.focusNode) === Node.DOCUMENT_POSITION_FOLLOWING;
-}
-
-export function repeat(func: () => any, n?: number) {
-    n ??= 1;
-    while (n--) func();
-}
-
-export function repeatable(func: () => any) {
-    return (n?: number) => repeat(func, n);
 }
 
 // Thank you Dataview
