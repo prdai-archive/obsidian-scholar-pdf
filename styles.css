@@ -613,29 +613,6 @@ body {
     color: var(--text-normal);
 }
 
-.scholar-annotate-button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--size-4-2);
-    cursor: pointer;
-    background-color: var(--interactive-accent);
-    color: var(--text-on-accent);
-    border: none;
-    border-radius: var(--radius-m);
-    padding: var(--size-4-2) var(--size-4-3);
-    font-weight: var(--font-medium);
-    transition: filter 100ms ease;
-}
-
-.scholar-annotate-button:hover {
-    filter: brightness(1.1);
-}
-
-.scholar-annotate-button .svg-icon {
-    width: 14px;
-    height: 14px;
-}
 
 .scholar-sidebar-empty {
     padding: var(--size-4-6) var(--size-4-4);
@@ -672,7 +649,7 @@ body {
 .scholar-card {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
-    background-color: transparent;
+    background-color: var(--background-primary);
     border: 1px solid var(--background-modifier-border);
     border-left: 3px solid var(--scholar-card-accent);
     border-radius: var(--radius-m);
@@ -696,7 +673,7 @@ body {
 .scholar-card-page {
     font-size: var(--font-ui-smaller);
     font-weight: var(--font-semibold);
-    color: var(--text-muted);
+    color: var(--text-accent);
     cursor: pointer;
     text-transform: uppercase;
     letter-spacing: 0.04em;

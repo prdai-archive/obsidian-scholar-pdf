@@ -104,11 +104,6 @@ export class ScholarAnnotationsView extends ItemView {
 
         title.setText(this.currentPdf.basename);
 
-        const annotateButton = header.createEl('button', { cls: 'scholar-annotate-button' });
-        setIcon(annotateButton.createSpan(), 'highlighter');
-        annotateButton.createSpan({ text: 'Annotate selection' });
-        annotateButton.addEventListener('click', () => this.plugin.scholarAnnotateSelection());
-
         const result = await this.plugin.scholar.parseAnnotations(this.currentPdf);
 
         if (!result || result.annotations.length === 0) {
