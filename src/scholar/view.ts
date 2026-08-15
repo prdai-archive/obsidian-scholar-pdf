@@ -36,8 +36,6 @@ export class ScholarAnnotationsView extends ItemView {
             return;
         }
         target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        target.addClass('is-flashing');
-        activeWindow.setTimeout(() => target.removeClass('is-flashing'), 1600);
     }
 
     constructor(leaf: WorkspaceLeaf, public plugin: PDFPlus) {

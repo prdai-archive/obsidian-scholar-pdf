@@ -778,16 +778,6 @@ body {
     color: var(--text-normal);
 }
 
-/* card flash on highlight click */
-.scholar-card.is-flashing {
-    animation: scholar-card-flash 0.8s ease 2;
-}
-
-@keyframes scholar-card-flash {
-    50% {
-        border-left-width: 6px;
-    }
-}
 
 .scholar-sidebar-search {
     width: 100%;
