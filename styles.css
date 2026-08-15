@@ -649,7 +649,7 @@ body {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
     /* dark card fill + left accent bar; locked so no state can tint it */
-    background: var(--background-secondary) !important;
+    background: #161616 !important;
     border: none;
     border-left: 3px solid var(--scholar-card-accent);
     border-radius: 0;
