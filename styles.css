@@ -594,7 +594,6 @@ body {
 
 .scholar-sidebar {
     padding: 0;
-    background-color: var(--background-secondary);
 }
 
 .scholar-sidebar-header {
@@ -649,8 +648,8 @@ body {
 .scholar-card {
     --scholar-card-accent: var(--text-highlight-bg);
     position: relative;
-    /* minimal: no fill, no box border - just the left accent bar */
-    background-color: transparent !important;
+    /* minimal: no fill ever, no box border - just the left accent bar */
+    background: none !important;
     border: none;
     border-left: 3px solid var(--scholar-card-accent);
     border-radius: 0;
@@ -659,9 +658,7 @@ body {
     transition: border-color 100ms ease, box-shadow 100ms ease;
 }
 
-.scholar-card:hover {
-    background-color: var(--background-modifier-hover) !important;
-}
+
 
 .scholar-card-meta {
     display: flex;
